@@ -170,3 +170,48 @@ impl TodoList {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_tasks<'a>(list: &'a TodoList) -> Vec<&'a str> {
+        list.items.iter().map(|x| x.title.as_str()).collect()
+    }
+
+    #[test]
+    fn add_task() {
+        let mut list = TodoList::new();
+
+        let task = Task::new(String::from("A"));
+        let task_id = task.id;
+        let res = list.add(None, task);
+        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
+        assert_eq!(vec!["A"], get_tasks(&list));
+
+        let task = Task::new(String::from("B"));
+        let task_id = task.id;
+        let res = list.add(Some(Position::AtIndex(0)), task);
+        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
+        assert_eq!(vec!["B", "A"], get_tasks(&list));
+
+        let task = Task::new(String::from("C"));
+        let task_id = task.id;
+        let res = list.add(Some(Position::AtIndex(1)), task);
+        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
+        assert_eq!(vec!["B", "C", "A"], get_tasks(&list));
+
+        let task = Task::new(String::from("D"));
+        let task_id = task.id;
+        let res = list.add(None, task);
+        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
+        assert_eq!(vec!["B", "C", "A", "D"], get_tasks(&list));
+
+        let task = Task::new(String::from("E"));
+        let task_id = task.id;
+        let pos = Some(Position::ById(list.items[1].id));
+        let res = list.add(pos, task);
+        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
+        assert_eq!(vec!["B", "C", "E", "A", "D"], get_tasks(&list));
+    }
+}
