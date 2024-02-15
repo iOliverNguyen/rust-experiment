@@ -15,6 +15,15 @@ pub enum Error {
     Validation(String),
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NotFound => f.write_str("task not found"),
+            Self::Validation(s) => f.write_str(s),
+        }
+    }
+}
+
 pub enum Position {
     AtIndex(usize),
     ById(TaskId),
@@ -49,11 +58,6 @@ impl Task {
             title: title.to_string(),
             done: false,
         }
-    }
-
-    pub fn set_done(&mut self, done: bool) -> &Self {
-        self.done = done;
-        self
     }
 
     pub fn validate(task: &Self) -> Result<Self, Error> {
@@ -95,7 +99,10 @@ impl TodoList {
 
         let mut buf = String::new();
         self.items.iter().enumerate().for_each(|(idx, task)| {
-            buf.write_fmt(format_args!("{:<3}. {}\n", idx + 1, task.title))
+            if idx > 0 {
+                buf.write_str("\n").unwrap();
+            }
+            buf.write_fmt(format_args!("{:>3}. {}", idx + 1, task.title))
                 .unwrap();
         });
         buf
@@ -252,7 +259,7 @@ mod tests {
         list.add(None, Task::new("C")).unwrap();
         assert_eq!(get_tasks(&list), vec!["A", "B", "C"],);
 
-        // update non existant item
+        // update non existent item
         let task = Task::new("not exist");
         let res = list.edit(None, task);
         assert_eq!(res.unwrap_err(), Error::NotFound);
@@ -279,7 +286,7 @@ mod tests {
         // update by index
         let task_id = list.items[2].id;
         let mut task = Task::new("C0");
-        task.set_done(true);
+        task.done = true;
 
         let res = list.edit(Some(Position::AtIndex(2)), task);
         assert_eq!(res.unwrap(), ActionResult::Updated(task_id));

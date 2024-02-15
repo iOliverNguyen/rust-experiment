@@ -8,8 +8,8 @@ use std::io::Write;
 use std::path;
 
 pub fn get_file_path() -> path::PathBuf {
-    let mut path = dirs::data_dir().unwrap();
-    path.push("rustexp/todo0/todo.json");
+    let mut path = dirs::home_dir().unwrap();
+    path.push(".rustexp/todo0/todo.json");
     path
 }
 
@@ -18,8 +18,13 @@ pub fn load_from_file(file_path: &path::Path) -> Result<TodoList, String> {
     let mut file = match fs::File::open(&file_path) {
         Ok(file) => Ok(file),
         Err(err) => match err.kind() {
-            io::ErrorKind::NotFound => fs::File::create(file_path)
-                .map_err(|err| format!("failed to create file {:?}: {}", file_path_str, err)),
+            io::ErrorKind::NotFound => {
+                let dir_path = file_path.parent().unwrap();
+                fs::create_dir_all(dir_path)
+                    .map_err(|err| format!("failed to create dir {:?}: {}", dir_path, err))?;
+                fs::File::create(file_path)
+                    .map_err(|err| format!("failed to create file {:?}: {}", file_path_str, err))
+            }
             _ => Err(format!("failed to open file {:?}: {}", file_path_str, err)),
         },
     }?;
@@ -47,7 +52,7 @@ pub fn save_to_file(file_path: &path::Path, todo_list: TodoList) -> Result<(), S
     let todo_json = serde_json::to_string(&todo_list)
         .map_err(|err| format!("failed to encode json: {}", err))?;
 
-    let mut file = fs::File::open(file_path_str)
+    let mut file = fs::File::create(file_path_str)
         .map_err(|err| format!("failed to write to file {:?}: {}", file_path_str, err))?;
 
     file.set_len(0).unwrap(); // truncate
