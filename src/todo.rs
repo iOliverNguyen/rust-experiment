@@ -1,34 +1,37 @@
 use rand;
+use serde::{Deserialize, Serialize};
+use std::fmt::{self, Write};
 
 #[derive(PartialEq, Debug)]
-enum ActionResult {
+pub enum ActionResult {
     Inserted(TaskId),
     Updated(TaskId),
     Deleted(TaskId),
 }
 
 #[derive(PartialEq, Debug)]
-enum Error {
+pub enum Error {
     NotFound,
     Validation(String),
 }
 
-enum Position {
+pub enum Position {
     AtIndex(usize),
     ById(TaskId),
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-struct TaskId(u64);
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+pub struct TaskId(u64);
 
-#[derive(Clone, PartialEq, Debug)]
-struct Task {
+#[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
+pub struct Task {
     pub id: TaskId,
     pub title: String,
     pub done: bool,
 }
 
-struct TodoList {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TodoList {
     pub items: Vec<Task>,
 }
 
@@ -52,14 +55,8 @@ impl Task {
         self.done = done;
         self
     }
-}
 
-impl TodoList {
-    pub fn new() -> Self {
-        TodoList { items: vec![] }
-    }
-
-    fn validate(task: Task) -> Result<Task, Error> {
+    pub fn validate(task: &Self) -> Result<Self, Error> {
         // validate
         let title = task.title.trim();
         if title == "" {
@@ -70,17 +67,44 @@ impl TodoList {
         let task = match task.id {
             TaskId(0) => Task {
                 id: TaskId::new(),
-                ..task
+                ..task.clone()
             },
-            _ => task,
+            _ => task.clone(),
         };
         Ok(task)
+    }
+}
+
+impl fmt::Display for TodoList {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let format_str = self.format();
+        f.write_str(&format_str).unwrap();
+        Ok(())
+    }
+}
+
+impl TodoList {
+    pub fn new() -> Self {
+        TodoList { items: vec![] }
+    }
+
+    pub fn format(&self) -> String {
+        if self.items.len() == 0 {
+            return String::from("no items");
+        }
+
+        let mut buf = String::new();
+        self.items.iter().enumerate().for_each(|(idx, task)| {
+            buf.write_fmt(format_args!("{:<3}. {}\n", idx + 1, task.title))
+                .unwrap();
+        });
+        buf
     }
 
     // add the task to the list (if the task.id already exist in the list, update it instead)
     pub fn add(&mut self, pos: Option<Position>, task: Task) -> Result<ActionResult, Error> {
         // generate id if empty
-        let task = Self::validate(task);
+        let task = Task::validate(&task);
         if let Err(err) = task {
             return Err(err);
         }
@@ -109,7 +133,7 @@ impl TodoList {
 
     pub fn edit(&mut self, pos: Option<Position>, task: Task) -> Result<ActionResult, Error> {
         // validate
-        let task = Self::validate(task);
+        let task = Task::validate(&task);
         if let Err(err) = task {
             return Err(err);
         }
