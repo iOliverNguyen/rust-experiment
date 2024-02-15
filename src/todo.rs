@@ -2,12 +2,12 @@ use rand;
 
 #[derive(PartialEq, Debug)]
 enum ActionResult {
-    Insert(TaskId),
-    Update(TaskId),
-    Delete(TaskId),
+    Inserted(TaskId),
+    Updated(TaskId),
+    Deleted(TaskId),
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Debug)]
 enum Error {
     NotFound,
     Validation(String),
@@ -21,7 +21,7 @@ enum Position {
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 struct TaskId(u64);
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Debug)]
 struct Task {
     pub id: TaskId,
     pub title: String,
@@ -40,12 +40,17 @@ impl TaskId {
 
 impl Task {
     // generate a new task with random id
-    pub fn new(title: String) -> Self {
+    pub fn new(title: &str) -> Self {
         Task {
             id: TaskId::new(),
-            title,
+            title: title.to_string(),
             done: false,
         }
+    }
+
+    pub fn set_done(&mut self, done: bool) -> &Self {
+        self.done = done;
+        self
     }
 }
 
@@ -99,7 +104,7 @@ impl TodoList {
                 }
             }
         };
-        Ok(ActionResult::Insert(id))
+        Ok(ActionResult::Inserted(id))
     }
 
     pub fn edit(&mut self, pos: Option<Position>, task: Task) -> Result<ActionResult, Error> {
@@ -117,7 +122,7 @@ impl TodoList {
             if let Some(item) = self.items.get_mut(index) {
                 *item = task;
             };
-            return Ok(ActionResult::Update(id));
+            return Ok(ActionResult::Updated(id));
         };
 
         // update the task
@@ -133,7 +138,7 @@ impl TodoList {
                             id: prev.id,
                             ..task
                         };
-                        Ok(ActionResult::Update(prev.id))
+                        Ok(ActionResult::Updated(prev.id))
                     }
                 }
             }
@@ -153,7 +158,7 @@ impl TodoList {
                     Some(task) => {
                         let id = task.id;
                         self.items.splice(index..=index, vec![]);
-                        Ok(ActionResult::Delete(id))
+                        Ok(ActionResult::Deleted(id))
                     }
                 }
             }
@@ -163,7 +168,7 @@ impl TodoList {
                     None => Err(Error::NotFound),
                     Some(index) => {
                         self.items.splice(index..=index, vec![]);
-                        Ok(ActionResult::Delete(id))
+                        Ok(ActionResult::Deleted(id))
                     }
                 }
             }
@@ -183,35 +188,107 @@ mod tests {
     fn add_task() {
         let mut list = TodoList::new();
 
-        let task = Task::new(String::from("A"));
+        let task = Task::new("A");
         let task_id = task.id;
         let res = list.add(None, task);
-        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
-        assert_eq!(vec!["A"], get_tasks(&list));
+        assert_eq!(ActionResult::Inserted(task_id), res.unwrap());
+        assert_eq!(get_tasks(&list), vec!["A"],);
 
-        let task = Task::new(String::from("B"));
+        let task = Task::new("B");
         let task_id = task.id;
         let res = list.add(Some(Position::AtIndex(0)), task);
-        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
-        assert_eq!(vec!["B", "A"], get_tasks(&list));
+        assert_eq!(ActionResult::Inserted(task_id), res.unwrap());
+        assert_eq!(get_tasks(&list), vec!["B", "A"],);
 
-        let task = Task::new(String::from("C"));
+        let task = Task::new("C");
         let task_id = task.id;
         let res = list.add(Some(Position::AtIndex(1)), task);
-        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
-        assert_eq!(vec!["B", "C", "A"], get_tasks(&list));
+        assert_eq!(ActionResult::Inserted(task_id), res.unwrap());
+        assert_eq!(get_tasks(&list), vec!["B", "C", "A"],);
 
-        let task = Task::new(String::from("D"));
+        let task = Task::new("D");
         let task_id = task.id;
         let res = list.add(None, task);
-        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
-        assert_eq!(vec!["B", "C", "A", "D"], get_tasks(&list));
+        assert_eq!(ActionResult::Inserted(task_id), res.unwrap());
+        assert_eq!(get_tasks(&list), vec!["B", "C", "A", "D"],);
 
-        let task = Task::new(String::from("E"));
+        let task = Task::new("E");
         let task_id = task.id;
         let pos = Some(Position::ById(list.items[1].id));
         let res = list.add(pos, task);
-        assert_eq!(ActionResult::Insert(task_id), res.unwrap());
-        assert_eq!(vec!["B", "C", "E", "A", "D"], get_tasks(&list));
+        assert_eq!(ActionResult::Inserted(task_id), res.unwrap());
+        assert_eq!(get_tasks(&list), vec!["B", "C", "E", "A", "D"],);
+    }
+
+    #[test]
+    fn edit_task() {
+        let mut list = TodoList::new();
+        list.add(None, Task::new("A")).unwrap();
+        list.add(None, Task::new("B")).unwrap();
+        list.add(None, Task::new("C")).unwrap();
+        assert_eq!(get_tasks(&list), vec!["A", "B", "C"],);
+
+        // update non existant item
+        let task = Task::new("not exist");
+        let res = list.edit(None, task);
+        assert_eq!(res.unwrap_err(), Error::NotFound);
+
+        // update by task id
+        let task_id = list.items[1].id;
+        let task = Task {
+            id: task_id,
+            title: String::from("B0"),
+            done: true,
+        };
+        let res = list.edit(None, task);
+        assert_eq!(res.unwrap(), ActionResult::Updated(task_id));
+        assert_eq!(get_tasks(&list), vec!["A", "B0", "C"]);
+        assert_eq!(
+            list.items[1],
+            Task {
+                id: task_id,
+                title: String::from("B0"),
+                done: true
+            }
+        );
+
+        // update by index
+        let task_id = list.items[2].id;
+        let mut task = Task::new("C0");
+        task.set_done(true);
+
+        let res = list.edit(Some(Position::AtIndex(2)), task);
+        assert_eq!(res.unwrap(), ActionResult::Updated(task_id));
+        assert_eq!(get_tasks(&list), vec!["A", "B0", "C0"]);
+        assert_eq!(
+            list.items[2],
+            Task {
+                id: task_id,
+                title: String::from("C0"),
+                done: true
+            }
+        );
+    }
+
+    #[test]
+    fn delete_task() {
+        let mut list = TodoList::new();
+        list.add(None, Task::new("A")).unwrap();
+        list.add(None, Task::new("B")).unwrap();
+        list.add(None, Task::new("C")).unwrap();
+        list.add(None, Task::new("D")).unwrap();
+        assert_eq!(get_tasks(&list), vec!["A", "B", "C", "D"],);
+
+        // delete by id
+        let task_id = list.items[1].id;
+        let res = list.delete(Some(Position::ById(task_id)));
+        assert_eq!(res.unwrap(), ActionResult::Deleted(task_id));
+        assert_eq!(get_tasks(&list), vec!["A", "C", "D"]);
+
+        // delete by index
+        let task_id = list.items[1].id;
+        let res = list.delete(Some(Position::AtIndex(1)));
+        assert_eq!(res.unwrap(), ActionResult::Deleted(task_id));
+        assert_eq!(get_tasks(&list), vec!["A", "D"]);
     }
 }
