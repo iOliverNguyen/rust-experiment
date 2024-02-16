@@ -46,7 +46,6 @@ pub fn cmd_del(todo_list: &mut TodoList, args: &[String]) -> Result<(), String> 
     if args.len() == 0 {
         return Err(format!("Invalid arguments. {}", short_help()));
     }
-    let mut count: usize = 0;
     let indexes = parse_args_as_indexes(todo_list.items.len(), args)?;
     let positions: Vec<_> = indexes
         .iter()
@@ -123,7 +122,7 @@ pub fn cmd_uncheck(todo_list: &mut TodoList, args: &[String]) -> Result<(), Stri
 
 fn map_result(res: Result<ActionResult, Error>) -> Result<(), String> {
     match res {
-        Ok(res) => Ok(()),
+        Ok(_) => Ok(()),
         Err(err) => Err(format!("{}", err)),
     }
 }

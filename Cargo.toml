@@ -1,2 +1,2 @@
 [workspace]
-members = ["todo0"]
+members = ["textview", "todo0"]
