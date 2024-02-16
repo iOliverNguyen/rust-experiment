@@ -9,6 +9,8 @@ use help::*;
 use std::{fs, process::exit};
 use todo::TodoList;
 
+use crate::todo::FormatOptions;
+
 fn main() {
     let file_path = get_file_path();
     let mut todo_list = load_from_file(&file_path)
@@ -30,7 +32,7 @@ fn main() {
             );
             exit(1);
         } else {
-            println!("{}", &todo_list);
+            println!("{}", todo_list.format(FormatOptions { use_color: true }));
             exit(0);
         }
     }
@@ -45,7 +47,7 @@ fn main() {
         }
         "reset" => {
             if let Ok(_) = fs::remove_file(&file_path) {
-                eprintln!("removed file {}", file_path.to_str().unwrap());
+                eprintln!("deleted all tasks");
             }
             exit(0);
         }

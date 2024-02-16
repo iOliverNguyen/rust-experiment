@@ -1,3 +1,4 @@
+use colored::*;
 use rand;
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Write};
@@ -24,13 +25,14 @@ impl fmt::Display for Error {
     }
 }
 
+#[derive(Copy, Clone)]
 pub enum Position {
     AtIndex(usize),
     ById(TaskId),
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-pub struct TaskId(u64);
+pub struct TaskId(pub u64);
 
 #[derive(Clone, PartialEq, Serialize, Deserialize, Debug)]
 pub struct Task {
@@ -42,6 +44,16 @@ pub struct Task {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TodoList {
     pub items: Vec<Task>,
+}
+
+pub struct FormatOptions {
+    pub use_color: bool,
+}
+
+impl Default for FormatOptions {
+    fn default() -> Self {
+        Self { use_color: false }
+    }
 }
 
 impl TaskId {
@@ -81,7 +93,7 @@ impl Task {
 
 impl fmt::Display for TodoList {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let format_str = self.format();
+        let format_str = self.format(FormatOptions { use_color: false });
         f.write_str(&format_str).unwrap();
         Ok(())
     }
@@ -92,7 +104,7 @@ impl TodoList {
         TodoList { items: vec![] }
     }
 
-    pub fn format(&self) -> String {
+    pub fn format(&self, opts: FormatOptions) -> String {
         if self.items.len() == 0 {
             return String::from("no items");
         }
@@ -102,9 +114,17 @@ impl TodoList {
             if idx > 0 {
                 buf.write_str("\n").unwrap();
             }
-            buf.write_fmt(format_args!("{:>3}. {}", idx + 1, task.title))
-                .unwrap();
+            let check = if task.done { "  ✔️" } else { "" };
+            let line_str = format!("{:>3}. {}{}", idx + 1, task.title, check);
+            if opts.use_color && task.done {
+                buf.write_fmt(format_args!("{}", &line_str.black()))
+                    .unwrap();
+            } else {
+                buf.write_fmt(format_args!("{}", &line_str.yellow()))
+                    .unwrap();
+            }
         });
+        dbg!(&buf);
         buf
     }
 
@@ -176,7 +196,7 @@ impl TodoList {
         }
     }
 
-    pub fn delete(&mut self, pos: Option<Position>) -> Result<ActionResult, Error> {
+    fn get_index(&mut self, pos: Option<Position>) -> Result<(usize, TaskId), Error> {
         match pos {
             None => Err(Error::Validation(String::from("invalid position"))),
             Some(Position::AtIndex(index)) => {
@@ -186,24 +206,56 @@ impl TodoList {
                 let task = self.items.get(index);
                 match task {
                     None => Err(Error::NotFound),
-                    Some(task) => {
-                        let id = task.id;
-                        self.items.splice(index..=index, vec![]);
-                        Ok(ActionResult::Deleted(id))
-                    }
+                    Some(task) => Ok((index, task.id)),
                 }
             }
             Some(Position::ById(id)) => {
                 let index = self.items.iter().position(|x| x.id == id);
                 match index {
                     None => Err(Error::NotFound),
-                    Some(index) => {
-                        self.items.splice(index..=index, vec![]);
-                        Ok(ActionResult::Deleted(id))
-                    }
+                    Some(index) => Ok((index, id)),
                 }
             }
         }
+    }
+
+    pub fn del(&mut self, pos: Option<Position>) -> Result<ActionResult, Error> {
+        let (index, task_id) = self.get_index(pos)?;
+        self.items.splice(index..=index, vec![]);
+        Ok(ActionResult::Deleted(task_id))
+    }
+
+    pub fn delete(&mut self, positions: &[Option<Position>]) -> Vec<Result<ActionResult, Error>> {
+        let indexes: Vec<_> = positions.iter().map(|pos| self.get_index(*pos)).collect();
+
+        let results = indexes
+            .iter()
+            .map(|x| match x {
+                Ok((_, task_id)) => Ok(ActionResult::Deleted(*task_id)),
+                Err(_) => Err(Error::NotFound),
+            })
+            .collect();
+
+        let indexes: Vec<usize> = indexes
+            .iter()
+            .filter_map(|x| match x {
+                Ok((index, _)) => Some(*index),
+                Err(_) => None,
+            })
+            .collect();
+
+        let items = self
+            .items
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, task)| match indexes.contains(&idx) {
+                true => Some(task.clone()),
+                false => None,
+            })
+            .collect();
+
+        self.items = items;
+        results
     }
 }
 
@@ -312,13 +364,13 @@ mod tests {
 
         // delete by id
         let task_id = list.items[1].id;
-        let res = list.delete(Some(Position::ById(task_id)));
+        let res = list.del(Some(Position::ById(task_id)));
         assert_eq!(res.unwrap(), ActionResult::Deleted(task_id));
         assert_eq!(get_tasks(&list), vec!["A", "C", "D"]);
 
         // delete by index
         let task_id = list.items[1].id;
-        let res = list.delete(Some(Position::AtIndex(1)));
+        let res = list.del(Some(Position::AtIndex(1)));
         assert_eq!(res.unwrap(), ActionResult::Deleted(task_id));
         assert_eq!(get_tasks(&list), vec!["A", "D"]);
     }

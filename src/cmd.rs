@@ -43,15 +43,82 @@ pub fn cmd_edit(todo_list: &mut TodoList, args: &[String]) -> Result<(), String>
 }
 
 pub fn cmd_del(todo_list: &mut TodoList, args: &[String]) -> Result<(), String> {
-    todo!()
+    if args.len() == 0 {
+        return Err(format!("Invalid arguments. {}", short_help()));
+    }
+    let mut count: usize = 0;
+    let indexes = parse_args_as_indexes(todo_list.items.len(), args)?;
+    let positions: Vec<_> = indexes
+        .iter()
+        .map(|idx| Some(Position::AtIndex(*idx - 1)))
+        .collect();
+
+    let results = todo_list.delete(&positions);
+    let mut results: Vec<_> = results
+        .iter()
+        .filter_map(|x| match x {
+            Ok(ActionResult::Deleted(TaskId(id))) => Some(*id as usize),
+            _ => None,
+        })
+        .collect();
+    results.sort();
+
+    let mut count: usize = 0;
+    let mut last: usize = 0;
+    for id in results {
+        if id != last {
+            count += 1
+        }
+        last = id
+    }
+    println!("deleted {} tasks", count);
+    Ok(())
 }
 
 pub fn cmd_check(todo_list: &mut TodoList, args: &[String]) -> Result<(), String> {
-    todo!()
+    if args.len() == 0 {
+        return Err(format!("Invalid arguments. {}", short_help()));
+    }
+    let mut count: usize = 0;
+    let indexes = parse_args_as_indexes(todo_list.items.len(), args)?;
+    for index in indexes {
+        let task = &todo_list.items[index - 1];
+        if !task.done {
+            count += 1;
+            let mut task = task.clone();
+            task.done = true;
+            map_result(todo_list.edit(Some(Position::AtIndex(index - 1)), task))?;
+        }
+    }
+    println!(
+        "marked {} task{} as done",
+        count,
+        if count != 1 { "s" } else { "" }
+    );
+    Ok(())
 }
 
 pub fn cmd_uncheck(todo_list: &mut TodoList, args: &[String]) -> Result<(), String> {
-    todo!()
+    if args.len() == 0 {
+        return Err(format!("Invalid arguments. {}", short_help()));
+    }
+    let mut count: usize = 0;
+    let indexes = parse_args_as_indexes(todo_list.items.len(), args)?;
+    for index in indexes {
+        let task = &todo_list.items[index - 1];
+        if task.done {
+            count += 1;
+            let mut task = task.clone();
+            task.done = false;
+            map_result(todo_list.edit(Some(Position::AtIndex(index - 1)), task))?;
+        }
+    }
+    println!(
+        "marked {} task{} as not done",
+        count,
+        if count != 1 { "s" } else { "" }
+    );
+    Ok(())
 }
 
 fn map_result(res: Result<ActionResult, Error>) -> Result<(), String> {
@@ -68,4 +135,18 @@ fn parse_task(args: &[String]) -> Result<Task, String> {
         let title = args[0..].join(" ");
         Ok(Task::new(&title))
     }
+}
+
+fn parse_args_as_indexes(max: usize, args: &[String]) -> Result<Vec<usize>, String> {
+    let mut indexes = vec![];
+    for arg in args {
+        let index = arg
+            .parse::<usize>()
+            .map_err(|_| format!("Invalid arguments. {}", short_help()))?;
+        if index <= 0 || index > max {
+            return Err(format!("index {} is out of range (max {})", index, max));
+        }
+        indexes.push(index);
+    }
+    Ok(indexes)
 }
