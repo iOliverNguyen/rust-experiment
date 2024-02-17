@@ -1,2 +1,2 @@
 [workspace]
-members = ["hello_floem", "textview", "todo0"]
+members = ["hello_floem", "hello_gpui", "textview", "todo0"]
