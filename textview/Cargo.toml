@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 floem = "0.1.1"
+smol_str = "0.2.1"

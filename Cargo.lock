@@ -3369,6 +3369,7 @@ name = "textview"
 version = "0.1.0"
 dependencies = [
  "floem",
+ "smol_str",
 ]
 
 [[package]]
