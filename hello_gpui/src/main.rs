@@ -1,5 +1,3 @@
-use std::ops::Shl;
-
 use gpui::*;
 
 actions!(app, [Quit, Open]);
@@ -89,7 +87,8 @@ impl Render for AppView {
             .bg(rgb(0x888888))
             .font("Fira Code")
             .children([
-                ext(div(), |x| flex_center(x))
+                div()
+                    .flex_center()
                     .h_10()
                     .bg(rgb(0xFFFFAA))
                     .text_size(px(12.))
@@ -100,7 +99,8 @@ impl Render for AppView {
                     .justify_center()
                     .items_center()
                     .children([
-                        { flex_center(div()) }
+                        div()
+                            .flex_center() // use StyledExtension
                             .w(px(100.))
                             .h_full()
                             .text_size(px(100.))
@@ -128,7 +128,7 @@ impl Render for AppView {
                                         .child("click to open"),
                                 ]),
                             ),
-                        { flex_center(div()) }
+                        ext(div(), |x| x.flex_center()) // use ext()
                             .w(px(100.))
                             .h_full()
                             .text_size(px(100.))
@@ -138,7 +138,8 @@ impl Render for AppView {
                     ]),
                 div().h(px(40.)).justify_center().items_center().children([
                     div(),
-                    ext(div(), |x| flex_center(x))
+                    div()
+                        .flex_center()
                         .size_full()
                         .text_size(px(14.))
                         .font("Arial")
@@ -147,7 +148,8 @@ impl Render for AppView {
                                 .h_full()
                                 .w(px(100.))
                                 .bg(rgb(mix32(0xFF6600, 0xFFFFFF))),
-                            ext(div(), |x| flex_center(x))
+                            div()
+                                .flex_center()
                                 .size_full()
                                 .bg(rgb(mix32(0xAAFFAA, 0xFFFFFF)))
                                 .child("click to choose a file"),
@@ -162,12 +164,15 @@ impl Render for AppView {
     }
 }
 
-fn ext<T: IntoElement>(x: T, f: impl Fn(T) -> T) -> T {
-    f(x)
+impl StyledExtension for Div {}
+trait StyledExtension: Styled {
+    fn flex_center(self) -> Self {
+        self.flex().justify_center().items_center()
+    }
 }
 
-fn flex_center<T: Styled>(x: T) -> T {
-    x.flex().justify_center().items_center()
+fn ext<T: IntoElement>(x: T, f: impl Fn(T) -> T) -> T {
+    f(x)
 }
 
 fn mix32(a: u32, b: u32) -> u32 {
