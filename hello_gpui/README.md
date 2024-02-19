@@ -1,13 +1,13 @@
-# Hello Floem
+# Hello GPUI
 
-_My experiment with Floem - a GUI framework._
+_My experiment with GPUI from Zed editor._
 
 ## Experiment
 
 - [x] Create a new app
 - [x] Create simple layout
 - [x] Custom titlebar and draggable
-- [ ] Cmd+W to close window
+- [ ] Cmd+W to close window [PR#7973](https://github.com/zed-industries/zed/pull/7973)
 - [ ] Clickable area
 - [ ] Keyboard event (left, right, enter)
 - [ ] Open new child window

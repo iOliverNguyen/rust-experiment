@@ -1,6 +1,6 @@
 use gpui::*;
 
-actions!(app, [Quit, Open]);
+actions!(app, [Quit, CloseWindow, ChooseFile]);
 
 fn main() {
     let app = App::new();
@@ -32,36 +32,41 @@ fn main() {
         cx.activate(true);
 
         cx.on_action(|act: &Quit, cx| cx.quit());
-        cx.on_action(move |act: &Open, cx| {
-            action_open(act, cx);
-        });
+        cx.on_action(|act: &CloseWindow, cx| action_close_window(act, cx));
+        cx.on_action(|act: &ChooseFile, cx| action_choose_file(act, cx));
+
         cx.bind_keys([
             KeyBinding::new("cmd-q", Quit, None),
-            KeyBinding::new("cmd-o", Open, None),
+            KeyBinding::new("cmd-w", CloseWindow, None),
+            KeyBinding::new("cmd-o", ChooseFile, None),
         ]);
 
         cx.set_menus(vec![
             Menu {
                 name: "",
-                items: vec![MenuItem::Action {
-                    name: "Quit",
-                    action: Box::new(Quit),
-                    os_action: None,
-                }],
+                items: vec![
+                    MenuItem::action("Close active window", CloseWindow),
+                    MenuItem::separator(),
+                    MenuItem::action("Quit", Quit),
+                ],
             },
             Menu {
                 name: "Second",
-                items: vec![MenuItem::Action {
-                    name: "Open",
-                    action: Box::new(Open),
-                    os_action: None,
-                }],
+                items: vec![MenuItem::action("Choose a file", ChooseFile)],
             },
         ]);
     })
 }
 
-fn action_open(_: &Open, cx: &mut gpui::AppContext) {
+fn action_close_window(_: &CloseWindow, cx: &mut gpui::AppContext) {
+    if let Some(handle) = cx.active_window() {
+        dbg!(&handle.window_id());
+        cx.update_window(handle, |_, cx| cx.remove_window())
+            .unwrap();
+    }
+}
+
+fn action_choose_file(_: &ChooseFile, cx: &mut gpui::AppContext) {
     let rx_paths = cx.prompt_for_paths(PathPromptOptions {
         files: true,
         directories: true,
@@ -147,7 +152,7 @@ impl Render for AppView {
                             div()
                                 .h_full()
                                 .w(px(100.))
-                                .bg(rgb(mix32(0xFF6600, 0xFFFFFF))),
+                                .bg(rgb(mix32(0xFFDD66, 0xFFFFFF))),
                             div()
                                 .flex_center()
                                 .size_full()
