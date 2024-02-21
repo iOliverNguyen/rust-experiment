@@ -27,12 +27,15 @@ fn main() {
             }),
             ..WindowOptions::default()
         };
-        cx.open_window(opts, |cx| cx.new_view(|cx| AppView::new(cx)));
+        cx.open_window(opts, |cx| {
+            let app_view = cx.new_view(AppView::new);
+            cx.focus_view(&app_view);
+            app_view
+        });
 
         cx.activate(true);
 
         cx.on_action(|act: &Quit, cx| cx.quit());
-        cx.on_action(|act: &CloseWindow, cx| action_close_window(act, cx));
         cx.on_action(|act: &ChooseFile, cx| action_choose_file(act, cx));
 
         cx.bind_keys([
@@ -58,14 +61,6 @@ fn main() {
     })
 }
 
-fn action_close_window(_: &CloseWindow, cx: &mut gpui::AppContext) {
-    if let Some(handle) = cx.active_window() {
-        dbg!(&handle.window_id());
-        cx.update_window(handle, |_, cx| cx.remove_window())
-            .unwrap();
-    }
-}
-
 fn action_choose_file(_: &ChooseFile, cx: &mut gpui::AppContext) {
     let rx_paths = cx.prompt_for_paths(PathPromptOptions {
         files: true,
@@ -75,17 +70,37 @@ fn action_choose_file(_: &ChooseFile, cx: &mut gpui::AppContext) {
     println!("{}", std::backtrace::Backtrace::capture());
 }
 
-struct AppView {}
+struct AppView {
+    pub root_focus_handle: FocusHandle,
+}
 
 impl AppView {
     fn new(cx: &mut ViewContext<Self>) -> Self {
-        AppView {}
+        let focus_handle = cx.focus_handle();
+        AppView {
+            root_focus_handle: focus_handle,
+        }
+    }
+
+    fn handle_keydown(&mut self, ev: &KeyDownEvent, cx: &mut ViewContext<Self>) {
+        dbg!(ev);
+    }
+}
+
+impl FocusableView for AppView {
+    fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
+        self.root_focus_handle.clone()
     }
 }
 
 impl Render for AppView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         div()
+            .id("root")
+            .key_context("AppView")
+            .track_focus(&self.root_focus_handle)
+            .on_action(|act: &CloseWindow, cx| cx.remove_window())
+            .on_key_down(cx.listener(Self::handle_keydown))
             .size_full()
             .flex()
             .flex_col()

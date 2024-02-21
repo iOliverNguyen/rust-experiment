@@ -7,7 +7,7 @@ _My experiment with GPUI from Zed editor._
 - [x] Create a new app
 - [x] Create simple layout
 - [x] Custom titlebar and draggable
-- [ ] Cmd+W to close window [PR#7973](https://github.com/zed-industries/zed/pull/7973)
+- [x] Cmd+W to close window
 - [ ] Clickable area
 - [ ] Keyboard event (left, right, enter)
 - [ ] Open new child window
