@@ -11,6 +11,6 @@ _My experiment with GPUI from Zed editor._
 - [x] Clickable area
 - [x] Keyboard event (left, right, enter)
 - [x] Open new child window
-- [ ] Open file dialog
+- [x] Open file dialog
 - [x] Menubar items
 - [ ] Click icon on dock to re-open

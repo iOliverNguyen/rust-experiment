@@ -1,9 +1,15 @@
-use std::{future::IntoFuture, ops::Deref};
+use std::{
+    fmt::Write,
+    future::IntoFuture,
+    ops::Deref,
+    path::{self, Path, PathBuf},
+};
 
 use gpui::*;
 
 actions!(app, [Quit, CloseWindow, ChooseFile]);
 
+use log::error;
 use once_cell::sync::Lazy;
 
 static KEY_LEFT: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("left").unwrap());
@@ -135,6 +141,7 @@ struct AppView {
 
     list_items: Model<ListPlanets>,
     active_idx: usize,
+    open_files: Option<Vec<PathBuf>>,
 }
 
 impl AppView {
@@ -144,6 +151,7 @@ impl AppView {
             focus_handle,
             active_idx: list.read_with(cx, |x, cx| x.default_index),
             list_items: list,
+            open_files: None,
         }
     }
 
@@ -220,6 +228,30 @@ impl AppView {
             })
         })
         .detach_and_log_err(cx);
+    }
+
+    fn prompt_open_file(&mut self, cx: &mut ViewContext<Self>) {
+        let rx_paths = cx.prompt_for_paths(PathPromptOptions {
+            files: true,
+            directories: true,
+            multiple: true,
+        });
+        cx.spawn(move |v, mut cx| async move {
+            if let Some(app_view) = v.upgrade() {
+                let paths = rx_paths.await.unwrap_or_else(|err| {
+                    println!("failed to choose files: {}", err);
+                    None
+                });
+                if let Some(paths) = paths {
+                    cx.update(|cx| {
+                        app_view.update(cx, |app_view, cx| app_view.open_files = Some(paths));
+                        cx.refresh();
+                    })
+                    .unwrap_or_else(|err| println!("{}", err));
+                }
+            };
+        })
+        .detach();
     }
 }
 
@@ -327,21 +359,36 @@ impl Render for AppView {
                         .size_full()
                         .text_size(px(14.))
                         .font("Arial")
-                        .children([
+                        .child(
                             div()
                                 .h_full()
                                 .w(px(100.))
                                 .bg(rgb(mix32(0xFFDD66, 0xFFFFFF))),
+                        )
+                        .child(
                             div()
+                                .id("choose_a_file")
                                 .flex_center()
                                 .size_full()
                                 .bg(rgb(mix32(0xAAFFAA, 0xFFFFFF)))
-                                .child("click to choose a file"),
+                                .on_click(cx.listener(|this, _, cx| this.prompt_open_file(cx)))
+                                .child({
+                                    match &self.open_files {
+                                        None => "click to choose a file".to_string(),
+                                        Some(files) => files
+                                            .iter()
+                                            .map(|p| p.display().to_string())
+                                            .collect::<Vec<_>>()
+                                            .join(", "),
+                                    }
+                                }),
+                        )
+                        .child(
                             div()
                                 .h_full()
                                 .w(px(100.))
                                 .bg(rgb(mix32(0x66DDFF, 0xFFFFFF))),
-                        ]),
+                        ),
                     div(),
                 ]),
             ])
