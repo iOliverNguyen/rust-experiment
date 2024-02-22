@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{future::IntoFuture, ops::Deref};
 
 use gpui::*;
 
@@ -9,8 +9,9 @@ use once_cell::sync::Lazy;
 static KEY_LEFT: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("left").unwrap());
 static KEY_RIGHT: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("right").unwrap());
 static KEY_ENTER: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("enter").unwrap());
-static KEY_ESC: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("esc").unwrap());
+static KEY_ESC: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("escape").unwrap());
 
+#[derive(Clone)]
 struct Planet {
     name: String,
     desc: String,
@@ -71,18 +72,9 @@ Planet::new("Neptune", "Neptune, an ice giant, is known for its deep blue color,
 fn main() {
     let app = App::new();
     app.run(|cx| {
-        let displays = cx.displays();
-        let first_display = displays.first().expect("no displays");
-
-        let window_size: Size<GlobalPixels> = size(px(800.), px(600.)).into();
-        let window_origin = point(
-            first_display.bounds().center().x - window_size.width / 2.,
-            first_display.bounds().center().y - window_size.height / 2.,
-        );
-
         let opts = WindowOptions {
             bounds: WindowBounds::Fixed(Bounds::<GlobalPixels>::new(
-                window_origin,
+                calc_window_origin(cx, 700., 500.),
                 size(px(800.), px(600.)).into(),
             )),
             titlebar: Some(TitlebarOptions {
@@ -181,6 +173,10 @@ impl AppView {
                 self.handle_right(cx);
                 cx.refresh();
             }
+            if *keystroke == *KEY_ENTER {
+                self.handle_enter(cx);
+                cx.refresh();
+            }
         };
     }
 
@@ -196,8 +192,34 @@ impl AppView {
         }
     }
 
-    fn handle_center(&mut self, cx: &mut ViewContext<Self>) {
-        println!("center")
+    fn handle_enter(&mut self, cx: &mut ViewContext<Self>) {
+        let item = self.list_items.read(cx).get(self.active_idx).unwrap();
+        let opts = WindowOptions {
+            bounds: WindowBounds::Fixed(Bounds::<GlobalPixels>::new(
+                calc_window_origin(cx, 800., 600.),
+                size(px(800.), px(600.)).into(),
+            )),
+            titlebar: Some(TitlebarOptions {
+                title: Some(item.name.clone().into()),
+                ..TitlebarOptions::default()
+            }),
+            center: true,
+            focus: true,
+            show: true,
+            kind: WindowKind::PopUp,
+            is_movable: true,
+            ..WindowOptions::default()
+        };
+        let item = item.clone(); // Clone the item
+        cx.spawn(|_, cx| async move {
+            cx.open_window(opts, move |cx| {
+                // Use move to take ownership of item_clone
+                let popup_view = cx.new_view(|cx| PopupView::new(cx, item));
+                cx.focus_view(&popup_view);
+                popup_view // Use move to take ownership of item_clone
+            })
+        })
+        .detach_and_log_err(cx);
     }
 }
 
@@ -258,7 +280,7 @@ impl Render for AppView {
                     .child(
                         div()
                             .id("center")
-                            .on_click(cx.listener(|this, _, cx| this.handle_center(cx)))
+                            .on_click(cx.listener(|this, _, cx| this.handle_enter(cx)))
                             .size_full()
                             .flex_center()
                             .bg(rgb(0xAAFFAA))
@@ -275,7 +297,7 @@ impl Render for AppView {
                                         .flex_center()
                                         .absolute()
                                         .bottom(px(140.))
-                                        .child("click to open"),
+                                        .child("enter to open"),
                                 ]),
                             ),
                     )
@@ -326,6 +348,53 @@ impl Render for AppView {
     }
 }
 
+struct PopupView {
+    item: Planet,
+    focus_handle: FocusHandle,
+}
+
+impl PopupView {
+    fn new(cx: &mut ViewContext<Self>, item: Planet) -> Self {
+        let focus_handle = cx.focus_handle();
+        PopupView { item, focus_handle }
+    }
+
+    fn handle_keydown(&mut self, ev: &KeyDownEvent, cx: &mut ViewContext<Self>) {
+        if let KeyDownEvent {
+            keystroke,
+            is_held: false,
+        } = ev
+        {
+            if *keystroke == *KEY_ESC {
+                cx.remove_window();
+            }
+        }
+    }
+}
+
+impl FocusableView for PopupView {
+    fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
+        self.focus_handle.clone()
+    }
+}
+
+impl Render for PopupView {
+    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        div()
+            .track_focus(&self.focus_handle)
+            .on_key_down(cx.listener(Self::handle_keydown))
+            .on_action(|_: &CloseWindow, cx| cx.remove_window())
+            .text_color(rgb(0xFFFFFF))
+            .bg(rgb(0x336633))
+            .flex_center()
+            .size_full()
+            .child(div().w_full().p(px(50.)).child(format!(
+                "{}\n\n(press ESC to close)",
+                self.item.desc.clone()
+            )))
+    }
+}
+
 impl<T: Styled> StyledExtension for T {}
 impl<T: IntoElement> ElementExtension for T {}
 
@@ -339,6 +408,18 @@ trait ElementExtension: IntoElement {
     fn apply(self, f: impl FnOnce(Self) -> Self) -> Self {
         f(self)
     }
+}
+
+fn calc_window_origin(cx: &AppContext, w: f32, h: f32) -> Point<GlobalPixels> {
+    let displays = cx.displays();
+    let first_display = displays.first().expect("no displays");
+
+    let window_size: Size<GlobalPixels> = size(px(w), px(h)).into();
+    let window_origin = point(
+        first_display.bounds().center().x - window_size.width / 2.,
+        first_display.bounds().center().y - window_size.height / 2.,
+    );
+    window_origin
 }
 
 fn mix32(a: u32, b: u32) -> u32 {

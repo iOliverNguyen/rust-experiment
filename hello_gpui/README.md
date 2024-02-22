@@ -8,9 +8,9 @@ _My experiment with GPUI from Zed editor._
 - [x] Create simple layout
 - [x] Custom titlebar and draggable
 - [x] Cmd+W to close window
-- [ ] Clickable area
-- [ ] Keyboard event (left, right, enter)
-- [ ] Open new child window
+- [x] Clickable area
+- [x] Keyboard event (left, right, enter)
+- [x] Open new child window
 - [ ] Open file dialog
-- [ ] Menubar items
+- [x] Menubar items
 - [ ] Click icon on dock to re-open
