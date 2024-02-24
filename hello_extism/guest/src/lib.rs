@@ -1,40 +1,5 @@
-use bincode;
 use extism_pdk::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, FromBytes)]
-#[encoding(Json)]
-struct AddArgs {
-    args: Vec<i64>,
-}
-
-#[derive(Serialize, Deserialize, ToBytes)]
-#[encoding(Json)]
-struct AddOut {
-    result: i64,
-    overflow: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-struct ListString {
-    items: Vec<String>,
-}
-
-impl FromBytesOwned for ListString {
-    fn from_bytes_owned(data: &[u8]) -> Result<Self, Error> {
-        let out: Self = bincode::deserialize(data)?;
-        Ok(out)
-    }
-}
-
-impl<'a> ToBytes<'a> for ListString {
-    type Bytes = Vec<u8>;
-
-    fn to_bytes(&self) -> Result<Self::Bytes, Error> {
-        let out = bincode::serialize(self)?;
-        Ok(out)
-    }
-}
+use hello_extism_shared::*;
 
 #[plugin_fn]
 pub fn greet(name: String) -> FnResult<String> {
@@ -81,9 +46,13 @@ pub fn capitalize(args: ListString) -> FnResult<ListString> {
 
     let mut res = vec![];
     for arg in args.items.iter() {
+        let mut res_item = String::new();
         for part in arg.split(" ") {
-            res.push(cap(part));
+            res_item.push_str(&cap(part));
+            res_item.push(' ');
         }
+        res_item.pop();
+        res.push(res_item);
     }
     Ok(ListString { items: res })
 }

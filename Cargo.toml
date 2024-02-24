@@ -1,8 +1,12 @@
 [workspace]
+resolver = "2"
+
 members = [
   "hello_extism/guest",
-  "textview",
+  "hello_extism/host",
+  "hello_extism/shared",
   "hello_floem",
   "hello_gpui",
+  "textview",
   "todo0",
 ]
