@@ -2,22 +2,22 @@ use extism::*;
 use hello_extism_shared::*;
 use std::{env, path::PathBuf};
 
-fn find_dir(target_dir: &str) -> Option<PathBuf> {
+fn find_root_dir() -> Option<PathBuf> {
     let dir = env::current_dir().unwrap();
     let mut dir = dir.as_path();
-    // let dir = dir.as_path();
-    while let Some(file_name) = dir.file_name() {
-        if file_name == target_dir {
+    while let Some(_) = dir.file_name() {
+        let git_dir = dir.join(".git");
+        if git_dir.exists() {
             return Some(dir.to_path_buf());
         }
         dir = dir.parent()?;
     }
-    eprintln!("Can not find dir {} in the path", target_dir);
+    eprintln!("Can not find root directory with .git");
     None
 }
 
 fn main() {
-    let root_dir = find_dir("rust-experiment").unwrap();
+    let root_dir = find_root_dir().unwrap();
     let guest_file = root_dir.join("target/wasm32-unknown-unknown/debug/hello_extism_guest.wasm");
     if !guest_file.exists() {
         panic!(
