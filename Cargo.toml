@@ -7,6 +7,7 @@ members = [
   "hello_extism/shared",
   "hello_floem",
   "hello_gpui",
+  "hello_macros",
   "textview",
   "todo0",
 ]

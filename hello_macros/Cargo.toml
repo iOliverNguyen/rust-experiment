@@ -1,8 +1,6 @@
 [package]
-name = "hello_floem"
+name = "hello_macros"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-floem = "0.1.1"
-smol_str = "0.2.1"
