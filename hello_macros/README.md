@@ -2,7 +2,9 @@
 
 ## Expriment
 
-- [x] Create
+- [x] Create declarative macros
+- [x] Use inner rules in declarative macros
+- [ ] Create procedural macros
 
 ## References
 

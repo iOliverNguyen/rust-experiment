@@ -8,6 +8,7 @@ members = [
   "hello_floem",
   "hello_gpui",
   "hello_macros/declarative",
+  "hello_macros/procedural",
   "textview",
   "todo0",
 ]
