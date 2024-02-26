@@ -1,4 +1,4 @@
-# Experiment with extism
+# Experiment with Extism
 
 ## Experiment
 

@@ -2906,7 +2906,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello_macros"
+name = "hello_macros_declarative"
 version = "0.1.0"
 
 [[package]]
