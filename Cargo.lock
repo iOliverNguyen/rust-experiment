@@ -2906,19 +2906,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hello_macros_declarative"
-version = "0.1.0"
-
-[[package]]
-name = "hello_macros_procedural"
-version = "0.1.0"
-dependencies = [
- "manyhow",
- "quote",
- "syn 2.0.50",
-]
-
-[[package]]
 name = "hermit-abi"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
