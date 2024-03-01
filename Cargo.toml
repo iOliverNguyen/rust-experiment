@@ -7,6 +7,8 @@ members = [
   "hello_extism/shared",
   "hello_floem",
   "hello_gpui",
+  "plugins/hello_guest",
+  "plugins/hello_host", "plugins/hello_ref",
   "textview",
   "todo0",
 ]
