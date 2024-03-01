@@ -102,7 +102,6 @@ fn main() {
         cx.activate(true);
 
         cx.on_action(|act: &Quit, cx| cx.quit());
-        cx.on_action(|act: &ChooseFile, cx| action_choose_file(act, cx));
 
         cx.bind_keys([
             KeyBinding::new("cmd-q", Quit, None),
@@ -127,15 +126,6 @@ fn main() {
     })
 }
 
-fn action_choose_file(_: &ChooseFile, cx: &mut gpui::AppContext) {
-    let rx_paths = cx.prompt_for_paths(PathPromptOptions {
-        files: true,
-        directories: true,
-        multiple: true,
-    });
-    println!("{}", std::backtrace::Backtrace::capture());
-}
-
 struct AppView {
     focus_handle: FocusHandle,
 
@@ -155,8 +145,13 @@ impl AppView {
         }
     }
 
-    fn bind_root_actions<T: StatefulInteractiveElement>(&self, root: T) -> T {
+    fn bind_root_actions<T: StatefulInteractiveElement>(
+        &self,
+        root: T,
+        cx: &ViewContext<Self>,
+    ) -> T {
         root.on_action(|_: &CloseWindow, cx| cx.remove_window())
+            .on_action(cx.listener(|this, _: &ChooseFile, cx| this.prompt_open_file(cx)))
     }
 
     fn is_left_available(&self, cx: &ViewContext<Self>) -> bool {
@@ -265,10 +260,9 @@ impl Render for AppView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         div()
             .id("root")
-            .apply(|x| self.bind_root_actions(x))
+            .apply(|x| self.bind_root_actions(x, cx))
             .key_context("AppView")
             .track_focus(&self.focus_handle)
-            .on_action(|act: &CloseWindow, cx| cx.remove_window())
             .on_key_down(cx.listener(Self::handle_keydown))
             .size_full()
             .flex()
@@ -374,7 +368,7 @@ impl Render for AppView {
                                 .on_click(cx.listener(|this, _, cx| this.prompt_open_file(cx)))
                                 .child({
                                     match &self.open_files {
-                                        None => "click to choose a file".to_string(),
+                                        None => "Cmd+O to choose a file".to_string(),
                                         Some(files) => files
                                             .iter()
                                             .map(|p| p.display().to_string())

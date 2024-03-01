@@ -999,7 +999,6 @@ dependencies = [
 [[package]]
 name = "collections"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "rustc-hash",
 ]
@@ -1079,7 +1078,6 @@ checksum = "91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f"
 dependencies = [
  "core-foundation-sys",
  "libc",
- "uuid 0.5.1",
 ]
 
 [[package]]
@@ -1265,7 +1263,7 @@ dependencies = [
  "cranelift-codegen",
  "cranelift-entity",
  "cranelift-frontend",
- "itertools",
+ "itertools 0.10.5",
  "log",
  "smallvec",
  "wasmparser 0.118.2",
@@ -1418,7 +1416,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef552e6f588e446098f6ba40d89ac146c8c7b64aade83c051ee00bb5d2bc18d"
 dependencies = [
- "uuid 1.7.0",
+ "uuid",
 ]
 
 [[package]]
@@ -1468,7 +1466,6 @@ dependencies = [
 [[package]]
 name = "derive_refineable"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1844,7 +1841,7 @@ dependencies = [
  "tracing-subscriber",
  "ureq",
  "url",
- "uuid 1.7.0",
+ "uuid",
  "wasmtime",
  "wasmtime-wasi",
 ]
@@ -2711,18 +2708,18 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "anyhow",
  "as-raw-xcb-connection",
  "ashpd 0.7.0",
  "async-task",
  "bindgen",
- "bitflags 2.4.2",
  "blade-graphics",
  "blade-macros",
  "block",
  "bytemuck",
+ "calloop",
+ "calloop-wayland-source",
  "cbindgen",
  "cocoa",
  "collections",
@@ -2739,7 +2736,7 @@ dependencies = [
  "futures",
  "gpui_macros",
  "image 0.23.14",
- "itertools",
+ "itertools 0.11.0",
  "lazy_static",
  "linkme",
  "log",
@@ -2748,11 +2745,11 @@ dependencies = [
  "num_cpus",
  "objc",
  "open",
- "ordered-float",
  "parking",
  "parking_lot 0.11.2",
  "pathfinder_geometry",
  "postage",
+ "profiling",
  "rand",
  "raw-window-handle 0.5.2",
  "raw-window-handle 0.6.0",
@@ -2773,7 +2770,7 @@ dependencies = [
  "tiny-skia 0.5.1",
  "usvg 0.14.1",
  "util",
- "uuid 1.7.0",
+ "uuid",
  "waker-fn",
  "wayland-backend",
  "wayland-client",
@@ -2785,7 +2782,6 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3203,6 +3199,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3566,12 +3571,9 @@ checksum = "4facc753ae494aeb6e3c22f839b158aebd4f9270f55cd3c79906c45476c47ab4"
 [[package]]
 name = "media"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "anyhow",
  "bindgen",
- "block",
- "bytes",
  "core-foundation",
  "foreign-types",
  "metal 0.25.0",
@@ -4045,15 +4047,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ordered-float"
-version = "2.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68f19d67e5a2795c94e73e0bb1cc1a7edeb2e28efd39e2e1c9b7a40c1108b11c"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "ordered-stream"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4445,6 +4438,19 @@ name = "profiling"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43d84d1d7a6ac92673717f9f6d1518374ef257669c24ebc5ac25d5033828be58"
+dependencies = [
+ "profiling-procmacros",
+]
+
+[[package]]
+name = "profiling-procmacros"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8021cf59c8ec9c432cfc2526ac6b8aa508ecaf29cd415f271b8406c1b851c3fd"
+dependencies = [
+ "quote",
+ "syn 2.0.50",
+]
 
 [[package]]
 name = "prost"
@@ -4463,7 +4469,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efb6c9a1dd1def8e2124d17e83a20af56f1570d6c2d2bd9e266ccb768df3840e"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.50",
@@ -4677,12 +4683,8 @@ dependencies = [
 [[package]]
 name = "refineable"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "derive_refineable",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -5575,7 +5577,6 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "sum_tree"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "arrayvec 0.7.4",
  "log",
@@ -6251,6 +6252,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicase"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7d2d4dafb69621809a81864c9c1b864479e1235c0dd4e199924b9742439ed89"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6474,7 +6484,6 @@ checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
 [[package]]
 name = "util"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#2b56c43f2d2172d0a8dcaadd9096280eaa7d2de7"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -6493,14 +6502,9 @@ dependencies = [
  "smol",
  "take-until",
  "tendril",
+ "unicase",
  "url",
 ]
-
-[[package]]
-name = "uuid"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcc7e3b898aa6f6c08e5295b6c89258d1331e9ac578cc992fb818759951bdc22"
 
 [[package]]
 name = "uuid"
