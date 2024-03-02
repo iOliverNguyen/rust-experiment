@@ -2,13 +2,15 @@
 resolver = "2"
 
 members = [
+  "crates/misc",
   "hello_extism/guest",
   "hello_extism/host",
   "hello_extism/shared",
   "hello_floem",
   "hello_gpui",
   "plugins/hello_guest",
-  "plugins/hello_host", "plugins/hello_ref",
+  "plugins/hello_host",
+  "plugins/hello_ref",
   "textview",
   "todo0",
 ]
