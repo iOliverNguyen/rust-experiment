@@ -1,7 +1,9 @@
+use std::ops::Deref;
+
 #[derive(Clone)]
 pub struct Planet {
-    name: String,
-    desc: String,
+    pub name: String,
+    pub desc: String,
 }
 
 impl Planet {
@@ -14,8 +16,8 @@ impl Planet {
 }
 
 pub struct ListPlanets {
-    items: Vec<Planet>,
-    default_index: usize,
+    pub items: Vec<Planet>,
+    pub default_index: usize,
 }
 
 impl Deref for ListPlanets {
