@@ -8,5 +8,6 @@ edition = "2021"
 [dependencies]
 eframe = "0.26.2"
 egui = "0.26.2"
+env_logger = "0.11.2"
 gpui = { path = "/Users/i/ws/clone/zed/crates/gpui" }
 misc = { version = "0.1.0", path = "../../crates/misc" }
