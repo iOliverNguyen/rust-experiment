@@ -63,7 +63,7 @@ impl Render for AppView {
                     .border_color(rgb(0xCCCCCC))
                     .bg(rgb(0xFFFFAA))
                     .text_size(px(12.))
-                    .child("Title"),
+                    .child("Reference Implementation: Widgets"),
             )
             .child(
                 div()

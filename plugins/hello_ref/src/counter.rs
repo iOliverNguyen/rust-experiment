@@ -1,4 +1,4 @@
-use egui::{self, Response, Ui};
+use gpui::*;
 
 pub struct CounterWidget {
     count: i32,
@@ -8,17 +8,21 @@ impl CounterWidget {
     pub fn new() -> Self {
         Self { count: 0 }
     }
+}
 
-    // pub fn render(&mut self, ui: &mut Ui) -> Response {
-    //     ui.horizontal(|ui| {
-    //         ui.label("Count: ");
-    //         ui.label(self.count.to_string());
-    //         if ui.button("+").clicked() {
-    //             self.count += 1;
-    //         }
-    //         if ui.button("-").clicked() {
-    //             self.count -= 1;
-    //         }
-    //     })
-    // }
+impl Render for CounterWidget {
+    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        div().id("root").size_full().flex().flex_col().child(
+            div()
+                .child(
+                    div()
+                        .id("btn-plus")
+                        .on_click(cx.listener(|this, ev, cx| {
+                            this.count += 1;
+                        }))
+                        .child(format!("Count: {}", self.count)),
+                )
+                .child(div()),
+        )
+    }
 }

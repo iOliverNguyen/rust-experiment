@@ -20,7 +20,7 @@ fn main() {
         };
 
         cx.open_window(opts, |cx| {
-            let app_view = cx.new_view(|cx| AppView::new(cx, list_planets));
+            let app_view = cx.new_view(|cx| AppView::new(cx));
             cx.focus_view(&app_view);
             app_view
         });
@@ -46,6 +46,24 @@ fn main() {
 
 struct AppView {
     focus_handle: FocusHandle,
+}
+
+impl AppView {
+    fn new(cx: &mut ViewContext<Self>) -> AppView {
+        todo!()
+    }
+}
+
+impl FocusableView for AppView {
+    fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
+        return self.focus_handle.clone();
+    }
+}
+
+impl Render for AppView {
+    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        todo!()
+    }
 }
 
 fn calc_window_origin(cx: &AppContext, w: f32, h: f32) -> Point<GlobalPixels> {
