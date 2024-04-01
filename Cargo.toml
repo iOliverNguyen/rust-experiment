@@ -9,6 +9,7 @@ members = [
   # "hello_floem",
   "hello_gpui",
   "playground/http_exp",
+  "playground/shared_mem",
   "plugins/hello_guest",
   "plugins/hello_host",
   "plugins/hello_ref",
