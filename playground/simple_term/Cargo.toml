@@ -1,0 +1,9 @@
+[package]
+name = "simple_term"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+io = "0.0.2"
+libc = "0.2.153"
+nix = { version = "0.28.0", features = ["term", "process"] }
